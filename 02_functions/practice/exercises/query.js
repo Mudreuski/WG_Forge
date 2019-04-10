@@ -82,5 +82,177 @@
  */
 
 export default function query() {
-  // ¯\_(ツ)_/¯
+  let checkFrom = false;
+  let whereWasApplied = false;
+  let expression = "";
+
+  let select = function(name) {
+    checkFrom = false;
+    whereWasApplied = false;
+
+    if (name === undefined) {
+      expression = 'SELECT * ';
+    } else {
+      expression = 'SELECT ' + name + " ";
+    }
+
+    return this;
+  }
+
+  let from = function(nameFrom) {
+    if (!checkFrom) {
+      checkFrom = true;
+
+      expression += 'FROM ';
+      expression += nameFrom;;
+
+      return this;
+    }
+
+    if (checkFrom) {
+      checkFrom = false;
+
+      return this;
+    }
+  }
+
+  let where = function(nameWhere) {
+    if (nameWhere) {
+
+      if (whereWasApplied) {
+        expression += ' AND ';
+      } else {
+        expression += ' WHERE ';
+      }
+
+      whereWasApplied = true;
+      expression += nameWhere + " ";
+    }
+
+    checkFrom = false;
+
+    let checkNot = false;
+
+    let convertToArg = function(value) {
+      if (typeof value === 'string') {
+        return '\'' + value + '\'';
+      }
+
+      return value;
+    }
+
+    let equals= function(equals) {
+      checkNot = false;
+      let checkValue = "";
+      
+      if (typeof equals === 'string') {
+        checkValue = '= \'' + equals + '\'';
+      } else {
+        checkValue = "= " + equals;
+      }
+
+      if (expression.slice(-(nameWhere.length + 5),) === nameWhere + " NOT ") {
+        expression = expression.substring(0, expression.length - (nameWhere.length + 5)) + "NOT " + nameWhere + " " + checkValue;
+      } else {
+        expression += checkValue;
+      } 
+
+      return fullObj;
+    }
+
+    let ink= function(name) {
+      checkNot = false;
+
+      expression += 'IN ';
+      expression += '(' + name.map(convertToArg).join(', ') + ')';
+
+      return this;
+    }
+
+    let gt= function(gt) {
+      checkNot = false;
+
+      expression += '> ';
+      expression += convertToArg(gt);
+
+      return this;
+    }
+
+    let gte = function(gte) {
+      checkNot = false;
+
+      expression += ' >= ';
+      expression += convertToArg(gte);
+
+      return this;
+    }
+
+    let lt = function(lt) {
+      checkNot = false;
+
+      expression += ' < ';
+      expression += convertToArg(lt);
+
+      return this;
+    }
+
+    let lte = function(lte) {
+      checkNot = false;
+
+      expression += '<= ';
+      expression += convertToArg(lte);
+
+      return this;
+    }
+
+
+    let between = function(from, to) {
+      checkNot = false;
+
+      expression += 'BETWEEN ';
+      expression += from + " AND " + to;
+
+      return this;
+    }
+
+    let isNull = function() {
+      checkNot = false;
+      if (expression.slice(-4,) === "NOT ") {
+        expression = expression.substring(0, expression.length - 4) + 'IS NOT NULL';
+      } else {
+        expression += 'NULL';
+      }
+      
+
+      return this;
+    }
+
+    let not = function() {
+      if (checkNot) {
+        throw new Error("not() can't be called multiple times in a row");
+      }
+
+      checkNot = true;
+
+      expression += 'NOT ';
+
+      return this;
+    }
+
+    let orWhereNew = function(nameWhere) {
+        expression += ' OR ' + nameWhere;
+
+        return this;
+    }
+
+    return {equals: equals, in: ink, gt: gt, gte: gte, lt: lt, lte: lte, between: between, isNull: isNull, not: not, orWhere: orWhereNew, toString: toString};
+  }
+
+  let toString = function() {
+    return expression + ";";
+  }
+
+  var fullObj = {select: select, from: from, where: where, orWhere: where, toString: toString};
+
+  return fullObj;
 }
