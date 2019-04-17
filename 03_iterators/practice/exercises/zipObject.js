@@ -10,6 +10,12 @@
  *  zipObject(['a', 'b'], [1, 2]);
  *  // => { 'a': 1, 'b': 2 }
  */
-export default function zipObject() {
-  // ¯\_(ツ)_/¯
+export default function zipObject(keys, values) {
+  const resultObj = {};
+
+  for (let item in keys) {
+    resultObj[keys[item]] = values[item];
+  }
+
+  return resultObj;
 }
